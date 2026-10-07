@@ -1,0 +1,195 @@
+Dataset shape: (125973, 43)
+Missing values: 0
+
+Top 10 labels:
+label
+normal         67343
+neptune        41214
+satan           3633
+ipsweep         3599
+portsweep       2931
+smurf           2646
+nmap            1493
+back             956
+teardrop         892
+warezclient      890
+Name: count, dtype: int64
+
+Class distribution:
+target
+Normal    67343
+Attack    58630
+Name: count, dtype: int64
+
+Training samples: 100778
+Testing samples : 25195
+
+Model trained successfully!
+
+Accuracy: 99.86 %
+
+Classification Report:
+              precision    recall  f1-score   support
+
+      Normal       1.00      1.00      1.00     13469
+      Attack       1.00      1.00      1.00     11726
+
+    accuracy                           1.00     25195
+   macro avg       1.00      1.00      1.00     25195
+weighted avg       1.00      1.00      1.00     25195
+
+
+
+Random Forest trained!
+Logistic Regression trained!
+Model Comparison (Precision/Recall/F1 are for the Attack class):
+Accuracy	Precision	Recall	F1-Score
+Model				
+Random Forest	0.9990	0.9995	0.9985	0.9990
+Decision Tree	0.9986	0.9982	0.9987	0.9985
+Logistic Regression	0.9718	0.9764	0.9627	0.9695
+
+
+True Negatives  (TN): 13463 -> Normal traffic correctly identified
+False Positives (FP): 6 -> Normal traffic wrongly flagged as attack (false alarms)
+False Negatives (FN): 18 -> Attacks that were MISSED
+True Positives  (TP): 11708 -> Attacks correctly detected
+Top 10 most important features (Random Forest):
+
+               Feature  Importance
+             src_bytes      0.1459
+               flag_SF      0.0853
+dst_host_same_srv_rate      0.0825
+             dst_bytes      0.0751
+    dst_host_srv_count      0.0571
+         diff_srv_rate      0.0365
+                 count      0.0350
+         same_srv_rate      0.0337
+    protocol_type_icmp      0.0330
+dst_host_diff_srv_rate      0.0299
+
+
+Why the top features matter (where a description is available):
+- src_bytes: Bytes sent from source to destination; attack traffic often has unusual payload sizes.
+- flag_SF: Normal TCP connection that started and finished properly.
+- dst_host_same_srv_rate: Share of the target host's recent connections using the same service.
+- dst_bytes: Bytes sent back by the destination; 0 can mean the target never replied.
+- dst_host_srv_count: Connections to the same service on the target host (last 100 connections).
+- diff_srv_rate: Share of recent connections to different services; high in port scans.
+- count: Connections to the same host in the last 2 seconds; high in floods and scans.
+- same_srv_rate: Share of recent connections to the same service; floods hit one service repeatedly.
+- protocol_type_icmp: ICMP (ping-type) traffic, used in ping floods and some scans.
+- dst_host_diff_srv_rate: Share of the target host's recent connections using different services.
+
+Top 10 ORIGINAL features (one-hot columns combined):
+Original
+src_bytes                 0.1459
+flag                      0.1074
+dst_host_same_srv_rate    0.0825
+dst_bytes                 0.0751
+service                   0.0704
+dst_host_srv_count        0.0571
+protocol_type             0.0530
+diff_srv_rate             0.0365
+count                     0.0350
+same_srv_rate             0.0337
+Samples per label in the dataset:
+
+label
+normal             67343
+neptune            41214
+satan               3633
+ipsweep             3599
+portsweep           2931
+smurf               2646
+nmap                1493
+back                 956
+teardrop             892
+warezclient          890
+pod                  201
+guess_passwd          53
+buffer_overflow       30
+warezmaster           20
+land                  18
+imap                  11
+rootkit               10
+loadmodule             9
+ftp_write              8
+multihop               7
+phf                    4
+perl                   3
+spy                    2
+
+
+Detection rate (recall) per attack TYPE - Random Forest (weakest first):
+
+test_samples	detected	missed	detection_rate	category	total_in_dataset
+label						
+ftp_write	2	0	2	0.0000	R2L	8
+spy	1	0	1	0.0000	R2L	2
+multihop	4	2	2	0.5000	R2L	7
+guess_passwd	13	12	1	0.9231	R2L	53
+warezclient	198	193	5	0.9747	R2L	890
+pod	41	40	1	0.9756	DoS	201
+portsweep	594	589	5	0.9916	Probe	2931
+satan	762	761	1	0.9987	Probe	3633
+loadmodule	1	1	0	1.0000	U2R	9
+land	5	5	0	1.0000	DoS	18
+ipsweep	735	735	0	1.0000	Probe	3599
+imap	2	2	0	1.0000	R2L	11
+phf	1	1	0	1.0000	R2L	4
+nmap	298	298	0	1.0000	Probe	1493
+buffer_overflow	5	5	0	1.0000	U2R	30
+back	196	196	0	1.0000	DoS	956
+smurf	518	518	0	1.0000	DoS	2646
+neptune	8146	8146	0	1.0000	DoS	41214
+teardrop	199	199	0	1.0000	DoS	892
+warezmaster	5	5	0	1.0000	R2L	20
+
+Detection rate per attack CATEGORY (weakest first):
+
+test_samples	detected	missed	detection_rate	share_of_all_missed_attacks
+category					
+R2L	226	215	11	0.9513	0.6111
+Probe	2389	2383	6	0.9975	0.3333
+DoS	9105	9104	1	0.9999	0.0556
+U2R	6	6	0	1.0000	0.0000
+
+Normal traffic correctly classified as normal: 0.9996
+
+Weakest attack CATEGORY in our results: R2L (detection rate 95.13%)
+Weakest attack TYPE with at least 10 test samples: guess_passwd (detection rate 92.31%)
+Attack types with fewer than 10 test samples give UNRELIABLE percentages (one miss changes the rate a lot).
+
+WHY SOME ATTACKS ARE HARDER TO DETECT (check against the tables above):
+1. Rare classes: types with very few training samples give the model little to learn from.
+2. Content-based attacks (typically R2L and U2R, e.g. password guessing, privilege
+   escalation) can look like a normal user session at the traffic-statistics level.
+3. DoS and Probe attacks usually leave strong statistical patterns (many connections,
+   SYN errors, many ports), so they are usually easier to detect.
+Only claim what the tables above actually show for YOUR run.
+
+Demo 1 - real normal connection from the test set
+Prediction: Normal Traffic   (attack probability: 0.00%)
+Actual label: Normal
+
+Demo 2 - real attack connection from the test set
+Prediction: Attack Traffic   (attack probability: 100.00%)
+Actual label: Attack
+
+Demo 3 - hand-made flood-like connection
+Prediction: Attack Traffic   (attack probability: 95.00%)
+(Illustrative only - hand-made inputs are not guaranteed to match real data.)
+
+Demo 4 - real normal connection with modified values
+Prediction: Normal Traffic   (attack probability: 9.00%)
+Metric	Value
+Dataset size (rows used)	125,973
+Training samples	100,778
+Testing samples	25,195
+Best model	Random Forest
+Best accuracy	99.9047%
+Best attack precision	99.9488%
+Best attack recall	99.8465%
+Best F1-score	99.8976%
+Best model is chosen by Attack-class F1-score. Precision, recall and F1 are for the Attack class.
